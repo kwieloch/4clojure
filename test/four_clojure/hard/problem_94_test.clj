@@ -44,25 +44,28 @@
 (def __
 
  (fn [m] 
-   (let [s (count m)
+   (let [size (count m)
          board (into [] (map vec m))
-         of [[-1 -1] [-1 0] [-1 1] [0 -1] [0 1] [1 -1] [1 0] [1 1]]
-         in? (fn [[x y]] (and (< -1 x s) (< -1 y s)))
+         within-board? (fn [[x y]] (and (< -1 x size) (< -1 y size)))         
+         neighbours (fn [x y] (filter within-board? (map #(map + % [x y]) 
+                                                         [[-1 -1] [-1 0] [-1 1] [0 -1] [0 1] [1 -1] [1 0] [1 1]])))
          state #(get-in board %)
-         a \#
-         d \space
-         a? #{a}
-         an (fn [x y] (count (filter a? (map state (filter in? (map #(map + % [x y]) of)))) )) 
-         destiny (fn [c an]
+         alive \#
+         dead \space
+         alive? #{alive}
+         num-of-alive-neighbours (fn [x y] (count (filter alive? (map state (neighbours x y))) )) 
+         fate (fn [cell alive-n]
                    (cond 
-                     (and (#{a} c) (< an 2)) d
-                     (and (#{a} c) (<= 2 an 3)) a
-                     (and (#{a} c) (> an 3)) d
-                     (and (not (#{a} c)) (= an  3)) a
-                     :else d))]
+                     (and (alive? cell) (< alive-n 2)) dead
+                     (and (alive? cell) (<= 2 alive-n 3)) alive
+                     (and (alive? cell) (> alive-n 3)) dead
+                     (and (not (alive? cell)) (= alive-n  3)) alive
+                     :else dead))]
 
-     (->> (for [x (range s) y (range s)] (destiny (state [x y]) (an x y)))
-          (partition s)
+     (->> (for [x (range size)
+                y (range size)]
+            (fate (state [x y]) (num-of-alive-neighbours x y)))
+          (partition size)
           (map #(apply str %)))))
 
  )
